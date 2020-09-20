@@ -72,7 +72,6 @@ QUnit.test('email link signin', async (assert) => {
   const states = [
     (u?: User) => assert.equal(u, undefined, 'start off without a user'),
     (u?: User) => assert.equal(u?.email, email, 'sign in'),
-    (u?: User) => assert.equal(u?.email, email, 'token refreshed'),
     (u?: User) => assert.equal(u, undefined, 'account deleted'),
   ];
 
@@ -103,8 +102,10 @@ QUnit.test('email link signin', async (assert) => {
   // force a refresh by mucking with the data
   // @ts-expect-error accessing private members
   auth._user.expiresAt = Date.now() - 10000;
+  const oldExpiresAt = auth.user!.expiresAt;
   // @ts-expect-error accessing private members
   await auth.refresh();
+  assert.notEqual(auth.user?.expiresAt, oldExpiresAt, 'expires changes');
 
   // delete the user
   await auth.delete();

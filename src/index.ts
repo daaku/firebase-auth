@@ -81,8 +81,11 @@ export class Auth {
   }
 
   private async setUser(user?: User, save = true) {
+    const old = this._user?.localId;
     this._user = user;
-    this._subscribers.forEach((cb) => cb(this._user));
+    if (old !== user?.localId) {
+      this._subscribers.forEach((cb) => cb(this._user));
+    }
     if (save) {
       if (user) {
         await this.storage.set(this.kUser, JSON.stringify(this._user));
