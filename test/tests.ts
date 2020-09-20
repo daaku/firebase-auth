@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Auth, AuthStorage, User } from '../src';
+import { Auth, User } from '../src';
 import { customAlphabet } from 'nanoid/index.js';
 
 const apiKey = 'AIzaSyCnFgFqO3d7RbJDcNAp_eO21KSOISCP9IU';
@@ -52,18 +52,6 @@ async function getSigninLink(login: string): Promise<string> {
   return decodeHTML(link).slice(1, -1);
 }
 
-const storage: AuthStorage = {
-  async set(k: string, v: string): Promise<void> {
-    localStorage.setItem(k, v);
-  },
-  async get(k: string): Promise<string | undefined> {
-    return localStorage.getItem(k) ?? undefined;
-  },
-  async remove(k: string): Promise<void> {
-    localStorage.removeItem(k);
-  },
-};
-
 QUnit.test('email link signin', async (assert) => {
   // random new email address
   const login = nanoid();
@@ -78,7 +66,6 @@ QUnit.test('email link signin', async (assert) => {
   const done = assert.async(states.length);
   const auth = await Auth.new({
     apiKey,
-    storage,
     name: nanoid(),
   });
 
@@ -128,7 +115,6 @@ QUnit.test('email sign-up / sign-in', async (assert) => {
   const done = assert.async(states.length);
   const auth = await Auth.new({
     apiKey,
-    storage,
     name: nanoid(),
   });
 

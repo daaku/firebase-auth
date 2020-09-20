@@ -40,6 +40,18 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+const defaultStorage: AuthStorage = {
+  async set(k: string, v: string): Promise<void> {
+    localStorage.setItem(k, v);
+  },
+  async get(k: string): Promise<string | undefined> {
+    return localStorage.getItem(k) ?? undefined;
+  },
+  async remove(k: string): Promise<void> {
+    localStorage.removeItem(k);
+  },
+};
+
 // Authentication & Authorization.
 export class Auth {
   private readonly kUser: string;
@@ -60,11 +72,11 @@ export class Auth {
   // Construct a new Auth instance.
   public static async new({
     apiKey,
-    storage,
+    storage = defaultStorage,
     name = '',
   }: {
     apiKey: string;
-    storage: AuthStorage;
+    storage?: AuthStorage;
     name?: string;
   }): Promise<Auth> {
     const auth = new Auth(apiKey, storage, name);
