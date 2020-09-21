@@ -25,7 +25,7 @@ async function secmail(params: { [key: string]: string }): Promise<any> {
       return `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`;
     })
     .join('&');
-  const url = `https://cors-anywhere.herokuapp.com/https://www.1secmail.com/api/v1/?${query}`;
+  const url = `https://www.1secmail.com/api/v1/?${query}`;
   const res = await fetch(url);
   return res.json();
 }
