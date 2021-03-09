@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { customAlphabet } from 'nanoid/index.js';
+import { customAlphabet } from 'nanoid';
 
 import { Auth, User } from '../src';
 
