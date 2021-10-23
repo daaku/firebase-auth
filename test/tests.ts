@@ -90,6 +90,7 @@ QUnit.test('email link signin', async (assert) => {
   // force a refresh by mucking with the data
   // @ts-expect-error accessing private members
   auth._user.expiresAt = Date.now() - 10000;
+  /* eslint-disable @typescript-eslint/no-non-null-assertion */
   const oldExpiresAt = auth.user!.expiresAt;
   // @ts-expect-error accessing private members
   await auth.refresh();
