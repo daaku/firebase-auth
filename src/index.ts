@@ -226,11 +226,11 @@ export class Auth {
     if (!this._user) {
       throw new Error('refresh called without existing user');
     }
-    const refreshToken = this._user.refreshToken;
     if (Date.now() < this._user.expiresAt) {
       return;
     }
     if (!this._refresh) {
+      const refreshToken = this._user.refreshToken;
       this._refresh = (async () => {
         const data = await this.api('token', {
           grant_type: 'refresh_token',
