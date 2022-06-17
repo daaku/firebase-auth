@@ -6,6 +6,7 @@
   "repository": "git@github.com:daaku/firebase-auth",
   "license": "MIT",
   "prettier": "prettier-config-daaku",
+  "type": "module",
   "exports": {
     ".": {
       "import": "./dist/src/index.js",
