@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { customAlphabet } from 'nanoid';
 
-import { Auth, User } from '../src';
+import { Auth, User } from '../src/index.js';
 
 const apiKey = 'AIzaSyCnFgFqO3d7RbJDcNAp_eO21KSOISCP9IU';
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz', 16);
