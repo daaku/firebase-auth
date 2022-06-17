@@ -4,9 +4,17 @@
   "version": "1.1.0",
   "description": "Firebase Auth token management.",
   "repository": "git@github.com:daaku/firebase-auth",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "license": "MIT",
   "prettier": "prettier-config-daaku",
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    }
+  },
+  "eslintConfig": {
+    "extends": "@daaku"
+  },
   "scripts": {
     "check:types": "tsc --noEmit",
     "check:lint": "eslint --fix --ignore-pattern dist .",
@@ -21,7 +29,6 @@
     "firebase",
     "auth"
   ],
-  "license": "MIT",
   "devDependencies": {
     "@daaku/eslint-config": "^4.0.0",
     "@daaku/qunit-puppeteer": "^2.0.0",
