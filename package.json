@@ -1,7 +1,7 @@
 {
   "name": "@daaku/firebase-auth",
   "author": "Naitik Shah <n@daaku.org>",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Firebase Auth token management.",
   "repository": "git@github.com:daaku/firebase-auth",
   "license": "MIT",
