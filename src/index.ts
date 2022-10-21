@@ -164,7 +164,8 @@ export class Auth {
     return this.#user?.idToken
   }
 
-  // Subscribe to get notified of user changes. Callback is invoked once
+  // Subscribe to get notified of user changes. This is fired only when
+  // user.localId changes (including sign in/sign out). Callback is invoked once
   // immediately with current user. Returned function can be used to
   // unsubscribe.
   public subscribe(cb: (user: User | undefined) => void): () => void {
