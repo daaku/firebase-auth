@@ -54,19 +54,19 @@ const defaultStorage: AuthStorage = {
 
 // Authentication & Authorization.
 export class Auth {
-  private readonly kUser: string;
-  private readonly kEmail: string;
-  private _user?: User;
-  private _refresh?: Promise<void>;
-  private _subscribers: { (user: User | undefined): void }[] = [];
+  readonly #kUser: string;
+  readonly #kEmail: string;
+  #user?: User;
+  #refresh?: Promise<void>;
+  #subscribers: { (user: User | undefined): void }[] = [];
 
   private constructor(
     private readonly apiKey: string,
     private readonly storage: AuthStorage,
     name: string,
   ) {
-    this.kUser = `auth:user:${name}:${this.apiKey}`;
-    this.kEmail = `auth:email:${name}:${this.apiKey}`;
+    this.#kUser = `auth:user:${name}:${this.apiKey}`;
+    this.#kEmail = `auth:email:${name}:${this.apiKey}`;
   }
 
   // Construct a new Auth instance.
@@ -80,7 +80,7 @@ export class Auth {
     name?: string;
   }): Promise<Auth> {
     const auth = new Auth(apiKey, storage, name);
-    const j = await auth.storage.get(auth.kUser);
+    const j = await auth.storage.get(auth.#kUser);
     if (j) {
       await auth.setUser(JSON.parse(j), false);
     }
@@ -89,27 +89,27 @@ export class Auth {
 
   // Get the current User if available.
   public get user(): User | undefined {
-    return this._user;
+    return this.#user;
   }
 
   private async setUser(user?: User, save = true) {
-    const old = this._user?.localId;
-    this._user = user;
+    const old = this.#user?.localId;
+    this.#user = user;
     if (old !== user?.localId) {
-      this._subscribers.forEach((cb) => cb(this._user));
+      this.#subscribers.forEach((cb) => cb(this.#user));
     }
     if (save) {
       if (user) {
-        await this.storage.set(this.kUser, JSON.stringify(this._user));
+        await this.storage.set(this.#kUser, JSON.stringify(this.#user));
       } else {
-        await this.storage.remove(this.kUser);
+        await this.storage.remove(this.#kUser);
       }
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async handleResponse(d: any): Promise<void> {
-    const old = this._user;
+    const old = this.#user;
     const expiresAt =
       Date.now() + parseInt(d.expiresIn ?? d.expires_in ?? 3600) * 1000;
     const user: User = {
@@ -157,27 +157,27 @@ export class Auth {
   // Get the bearer token, if one is available. Refresh it if necessary. This
   // method can be used as a TokenSource in @daaku/firebase-rest-api.
   public async getBearerToken(): Promise<string | undefined> {
-    if (!this._user?.refreshToken) {
+    if (!this.#user?.refreshToken) {
       return;
     }
     await this.refresh();
-    return this._user?.idToken;
+    return this.#user?.idToken;
   }
 
   // Subscribe to get notified of user changes. Callback is invoked once
   // immediately with current user. Returned function can be used to
   // unsubscribe.
   public subscribe(cb: (user: User | undefined) => void): () => void {
-    this._subscribers.push(cb);
-    cb(this._user);
+    this.#subscribers.push(cb);
+    cb(this.#user);
     return () => {
-      this._subscribers = this._subscribers.filter((e) => e !== cb);
+      this.#subscribers = this.#subscribers.filter((e) => e !== cb);
     };
   }
 
   // Send a link to the provided email address that allows signing in.
   public async sendEmailSigninLink(email: string): Promise<void> {
-    await this.storage.set(this.kEmail, email);
+    await this.storage.set(this.#kEmail, email);
     await this.api('sendOobCode', {
       requestType: 'EMAIL_SIGNIN',
       email,
@@ -191,7 +191,7 @@ export class Auth {
     if (!oobCode) {
       throw new Error('oobCode not found in URL');
     }
-    const email = await this.storage.get(this.kEmail);
+    const email = await this.storage.get(this.#kEmail);
     if (!email) {
       throw new Error('email not found in storage');
     }
@@ -200,7 +200,7 @@ export class Auth {
       email,
     });
     await this.handleResponse(data);
-    await this.storage.remove(this.kEmail);
+    await this.storage.remove(this.#kEmail);
   }
 
   // This allows calling for the various APIs documented here:
@@ -223,15 +223,15 @@ export class Auth {
   }
 
   private async refresh(): Promise<void> {
-    if (!this._user) {
+    if (!this.#user) {
       throw new Error('refresh called without existing user');
     }
-    if (Date.now() < this._user.expiresAt) {
+    if (Date.now() < this.#user.expiresAt) {
       return;
     }
-    if (!this._refresh) {
-      const refreshToken = this._user.refreshToken;
-      this._refresh = (async () => {
+    if (!this.#refresh) {
+      const refreshToken = this.#user.refreshToken;
+      this.#refresh = (async () => {
         const data = await this.api('token', {
           grant_type: 'refresh_token',
           refresh_token: refreshToken,
@@ -239,7 +239,7 @@ export class Auth {
         await this.handleResponse(data);
       })();
     }
-    await this._refresh;
-    delete this._refresh;
+    await this.#refresh;
+    this.#refresh = undefined;
   }
 }
