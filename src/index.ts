@@ -52,7 +52,7 @@ const defaultStorage: AuthStorage = {
   },
 };
 
-// Authentication & Authorization.
+// Authentication using Firebase API key.
 export class Auth {
   readonly #apiKey: string;
   readonly #storage: AuthStorage;
