@@ -54,19 +54,19 @@ const defaultStorage: AuthStorage = {
 
 // Authentication & Authorization.
 export class Auth {
+  readonly #apiKey: string;
+  readonly #storage: AuthStorage;
   readonly #kUser: string;
   readonly #kEmail: string;
   #user?: User;
   #refresh?: Promise<void>;
   #subscribers: { (user: User | undefined): void }[] = [];
 
-  private constructor(
-    private readonly apiKey: string,
-    private readonly storage: AuthStorage,
-    name: string,
-  ) {
-    this.#kUser = `auth:user:${name}:${this.apiKey}`;
-    this.#kEmail = `auth:email:${name}:${this.apiKey}`;
+  private constructor(apiKey: string, storage: AuthStorage, name: string) {
+    this.#apiKey = apiKey;
+    this.#storage = storage;
+    this.#kUser = `auth:user:${name}:${this.#apiKey}`;
+    this.#kEmail = `auth:email:${name}:${this.#apiKey}`;
   }
 
   // Construct a new Auth instance.
@@ -80,7 +80,7 @@ export class Auth {
     name?: string;
   }): Promise<Auth> {
     const auth = new Auth(apiKey, storage, name);
-    const j = await auth.storage.get(auth.#kUser);
+    const j = await auth.#storage.get(auth.#kUser);
     if (j) {
       await auth.setUser(JSON.parse(j), false);
     }
@@ -100,9 +100,9 @@ export class Auth {
     }
     if (save) {
       if (user) {
-        await this.storage.set(this.#kUser, JSON.stringify(this.#user));
+        await this.#storage.set(this.#kUser, JSON.stringify(this.#user));
       } else {
-        await this.storage.remove(this.#kUser);
+        await this.#storage.remove(this.#kUser);
       }
     }
   }
@@ -177,7 +177,7 @@ export class Auth {
 
   // Send a link to the provided email address that allows signing in.
   public async sendEmailSigninLink(email: string): Promise<void> {
-    await this.storage.set(this.#kEmail, email);
+    await this.#storage.set(this.#kEmail, email);
     await this.api('sendOobCode', {
       requestType: 'EMAIL_SIGNIN',
       email,
@@ -191,7 +191,7 @@ export class Auth {
     if (!oobCode) {
       throw new Error('oobCode not found in URL');
     }
-    const email = await this.storage.get(this.#kEmail);
+    const email = await this.#storage.get(this.#kEmail);
     if (!email) {
       throw new Error('email not found in storage');
     }
@@ -200,7 +200,7 @@ export class Auth {
       email,
     });
     await this.handleResponse(data);
-    await this.storage.remove(this.#kEmail);
+    await this.#storage.remove(this.#kEmail);
   }
 
   // This allows calling for the various APIs documented here:
@@ -209,8 +209,10 @@ export class Auth {
   public async api(endpoint: string, body: any): Promise<any> {
     const url =
       endpoint === 'token'
-        ? `https://securetoken.googleapis.com/v1/token?key=${this.apiKey}`
-        : `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${this.apiKey}`;
+        ? `https://securetoken.googleapis.com/v1/token?key=${this.#apiKey}`
+        : `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${
+            this.#apiKey
+          }`;
     const response = await fetch(url, {
       method: 'post',
       body: JSON.stringify(body),
