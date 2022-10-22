@@ -1,6 +1,7 @@
 /.eslintrc.js
 /.github
 /.vscode
+/coverage
 /dist/bundle
 /dist/test
 /src
