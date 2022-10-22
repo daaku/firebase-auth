@@ -93,8 +93,8 @@ QUnit.test('email link signin', async assert => {
   lastUser!.expiresAt = Date.now() - 10000
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
   const oldExpiresAt = lastUser!.expiresAt
-  // @ts-expect-error accessing private members
-  await auth.refresh()
+  // trigger a refresh
+  await auth.getBearerToken()
   assert.notEqual(auth.user?.expiresAt, oldExpiresAt, 'expires changes')
 
   // delete the user
