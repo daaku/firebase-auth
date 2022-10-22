@@ -71,9 +71,7 @@ QUnit.test('email link signin', async assert => {
 
   // monitor the various auth state changes
   let count = 0
-  let lastUser: User | undefined
   auth.subscribe(async user => {
-    lastUser = user
     const f = states[count]
     if (!f) {
       assert.ok(false, 'unexpected assertion')
@@ -90,9 +88,9 @@ QUnit.test('email link signin', async assert => {
 
   // force a refresh by mucking with the data
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
-  lastUser!.expiresAt = Date.now() - 10000
+  auth.user!.expiresAt = Date.now() - 10000
   /* eslint-disable @typescript-eslint/no-non-null-assertion */
-  const oldExpiresAt = lastUser!.expiresAt
+  const oldExpiresAt = auth.user!.expiresAt
   // trigger a refresh
   await auth.getBearerToken()
   assert.notEqual(auth.user?.expiresAt, oldExpiresAt, 'expires changes')
