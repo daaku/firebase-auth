@@ -59,7 +59,7 @@ export class Auth {
   readonly #kUser: string
   readonly #kEmail: string
   #user?: User
-  #refresh?: Promise<void>
+  #refreshP?: Promise<void>
   #subscribers: { (user: User | undefined): void }[] = []
 
   private constructor(apiKey: string, storage: AuthStorage, name: string) {
@@ -82,7 +82,7 @@ export class Auth {
     const auth = new Auth(apiKey, storage, name)
     const j = await auth.#storage.get(auth.#kUser)
     if (j) {
-      await auth.setUser(JSON.parse(j), false)
+      await auth.#setUser(JSON.parse(j), false)
     }
     return auth
   }
@@ -92,7 +92,7 @@ export class Auth {
     return this.#user
   }
 
-  private async setUser(user?: User, save = true) {
+  async #setUser(user?: User, save = true) {
     const old = this.#user?.localId
     this.#user = user
     if (old !== user?.localId) {
@@ -108,7 +108,7 @@ export class Auth {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async handleResponse(d: any): Promise<void> {
+  async #handleResponse(d: any): Promise<void> {
     const old = this.#user
     const expiresAt =
       Date.now() + parseInt(d.expiresIn ?? d.expires_in ?? 3600) * 1000
@@ -119,26 +119,26 @@ export class Auth {
       idToken: d.idToken ?? d.id_token ?? old?.idToken,
       expiresAt,
     }
-    await this.setUser(user)
+    await this.#setUser(user)
   }
 
   // Sign out the User and clear stored Auth data.
   public async signOut(): Promise<void> {
-    await this.setUser()
+    await this.#setUser()
   }
 
   // Sign-Up a new user.
   // https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/signUp
   public async signUp(req: SignUpRequest): Promise<void> {
     const data = await this.api('signUp', req)
-    await this.handleResponse(data)
+    await this.#handleResponse(data)
   }
 
   // Sign-In exsiting user.
   // https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/signInWithPassword
   public async signIn(req: SignInRequest): Promise<void> {
     const data = await this.api('signInWithPassword', req)
-    await this.handleResponse(data)
+    await this.#handleResponse(data)
   }
 
   // Reset password for user.
@@ -160,7 +160,7 @@ export class Auth {
     if (!this.#user?.refreshToken) {
       return
     }
-    await this.refresh()
+    await this.#refresh()
     return this.#user?.idToken
   }
 
@@ -200,7 +200,7 @@ export class Auth {
       oobCode,
       email,
     })
-    await this.handleResponse(data)
+    await this.#handleResponse(data)
     await this.#storage.remove(this.#kEmail)
   }
 
@@ -225,24 +225,24 @@ export class Auth {
     return data
   }
 
-  private async refresh(): Promise<void> {
+  async #refresh(): Promise<void> {
     if (!this.#user) {
       throw new Error('refresh called without existing user')
     }
     if (Date.now() < this.#user.expiresAt) {
       return
     }
-    if (!this.#refresh) {
+    if (!this.#refreshP) {
       const refreshToken = this.#user.refreshToken
-      this.#refresh = (async () => {
+      this.#refreshP = (async () => {
         const data = await this.api('token', {
           grant_type: 'refresh_token',
           refresh_token: refreshToken,
         })
-        await this.handleResponse(data)
+        await this.#handleResponse(data)
       })()
     }
-    await this.#refresh
-    this.#refresh = undefined
+    await this.#refreshP
+    this.#refreshP = undefined
   }
 }
