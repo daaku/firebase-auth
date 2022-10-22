@@ -18,7 +18,7 @@ const decodeHTML = (html: string): string => {
   return txt.value
 }
 
-const secmail = async (params: { [key: string]: string }): Promise<any> => {
+const secmail = async (params: Record<string, string>): Promise<any> => {
   params.domain = domain
   const query = Object.keys(params)
     .map(k => {
