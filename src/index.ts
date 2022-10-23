@@ -166,11 +166,16 @@ export class Auth {
 
   // Subscribe to get notified of user changes. This is fired only when
   // user.localId changes (including sign in/sign out). Callback is invoked once
-  // immediately with current user. Returned function can be used to
-  // unsubscribe.
-  public subscribe(cb: (user: User | undefined) => void): () => void {
+  // immediately with current user, unless immediate = false. Returned function
+  // can be used to unsubscribe.
+  public subscribe(
+    cb: (user: User | undefined) => void,
+    immediate = true,
+  ): () => void {
     this.#subscribers.push(cb)
-    cb(this.#user)
+    if (immediate) {
+      cb(this.#user)
+    }
     return () => {
       this.#subscribers = this.#subscribers.filter(e => e !== cb)
     }

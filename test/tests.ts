@@ -71,7 +71,7 @@ QUnit.test('email link signin', async assert => {
 
   // monitor the various auth state changes
   let count = 0
-  auth.subscribe(async user => {
+  auth.subscribe(user => {
     const f = states[count]
     if (!f) {
       assert.ok(false, 'unexpected assertion')
@@ -121,7 +121,7 @@ QUnit.test('email sign-up / sign-in', async assert => {
 
   // monitor the various auth state changes
   let count = 0
-  auth.subscribe(async user => {
+  auth.subscribe(user => {
     const f = states[count]
     if (!f) {
       assert.ok(false, 'unexpected assertion')
@@ -138,6 +138,42 @@ QUnit.test('email sign-up / sign-in', async assert => {
   })
   await auth.signOut()
   await auth.signIn({
+    email,
+    password,
+  })
+  await auth.delete()
+})
+
+QUnit.test('subscribe with immediate = false', async assert => {
+  // random new email address
+  const login = nanoid()
+  const password = nanoid()
+  const email = `${login}@${domain}`
+
+  const states = [
+    (u?: User) => assert.equal(u?.email, email, 'sign up'),
+    (u?: User) => assert.equal(u, undefined, 'account deleted'),
+  ]
+
+  const done = assert.async(states.length)
+  const auth = await Auth.new({
+    apiKey,
+    name: nanoid(),
+  })
+
+  // monitor the various auth state changes
+  let count = 0
+  auth.subscribe(user => {
+    const f = states[count]
+    if (!f) {
+      assert.ok(false, 'unexpected assertion')
+    }
+    count++
+    f(user)
+    done()
+  }, false)
+
+  await auth.signUp({
     email,
     password,
   })
