@@ -8,42 +8,23 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/src/index.js",
-      "types": "./dist/src/index.d.ts"
+      "import": "./dist/index.mjs"
     }
   },
-  "eslintConfig": {
-    "extends": "@daaku"
-  },
-  "prettier": {
-    "arrowParens": "avoid",
-    "semi": false,
-    "singleQuote": true,
-    "trailingComma": "all"
-  },
   "scripts": {
-    "check:types": "tsc --noEmit",
-    "check:lint": "eslint --fix --ignore-pattern dist .",
-    "check": "run-p 'check:*' 'test'",
-    "build:js": "tsc",
-    "build:test": "esbuild --bundle --sourcemap --define:process.env.NODE_ENV=\\\"production\\\" --outdir=dist/bundle test/tests.ts",
-    "test": "npm run build:test && TIMEOUT=30000 qunit-puppeteer",
-    "build": "run-p check:lint test build:js",
-    "deploy": "npm run build && npm publish --access=public"
+    "prepare": "mkdir -p dist && dak-transpile < index.dak > dist/index.mjs",
+    "test": "dak test/build.dak && TIMEOUT=30000 qunit-puppeteer"
   },
   "keywords": [
     "firebase",
     "auth"
   ],
   "devDependencies": {
-    "@daaku/eslint-config": "^4.0.0",
     "@daaku/qunit-puppeteer": "^3.0.0",
-    "@types/qunit": "^2.11.2",
-    "esbuild": "^0.17.5",
-    "eslint": "^8.1.0",
+    "@daklang/cli": "^0.9.2",
+    "@daklang/esbuild": "^0.1.2",
+    "esbuild": "^0.17.12",
     "nanoid": "^4.0.0",
-    "npm-run-all": "^4.1.5",
-    "qunit": "^2.17.2",
-    "typescript": "^5.0.2"
+    "qunit": "^2.17.2"
   }
 }

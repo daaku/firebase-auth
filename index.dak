@@ -1,0 +1,131 @@
+(const defaultStorage
+  {:set (fn@ [k v] (localStorage.setItem k v))
+   :get (fn@ [k] (?? (localStorage.getItem k) undefined))
+   :remove (fn@ [k] (localStorage.removeItem k))})
+
+; Authentication using Firebase API key.
+(class ^:export Auth
+  (let [#apiKey #storage #kUser #kEmail #user #refreshP])
+  (let #subscribers [])
+
+  (fn constructor [apiKey storage name]
+    (set #apiKey apiKey)
+    (set #storage storage)
+    (set #kUser `auth:user:${name}:${apiKey}`)
+    (set #kEmail `auth:email:${name}:${apiKey}`))
+
+  (fn@ ^:static new [{:or {apiKey "" storage defaultStorage name ""}}]
+    (let [auth (Auth. apiKey storage name)]
+      (when-let [j @(auth.#storage.get auth.#kUser)]
+        @(auth.#setUser (JSON.parse j) false))
+      auth))
+
+  ; Get the current User if available.
+  (fn ^:get user [] #user)
+
+  (fn@ #setUser [user (save true)]
+    (let [old #user?.localId]
+      (set #user user)
+      (when (not= old user?.localId)
+        (#subscribers.forEach #($ #user)))
+      (when save
+        (if user
+          @(#storage.set #kUser (JSON.stringify #user))
+          @(#storage.remove #kUser)))))
+
+  (fn@ #handleResponse [d]
+    (let [old #user
+          expires-at (+ (Date.now)
+                        (* (parseInt (?? d.expiresIn d.expires_in 3600)) 1000))]
+      @(#setUser
+         {:localId (?? d.localId old?.localId)
+          :email (?? d.email old?.email)
+          :refreshToken (?? d.refreshToken d.refresh_token old?.refreshToken)
+          :idToken (?? d.idToken d.id_token old?.idToken)
+          :expiresAt expires-at})))
+
+  ; Sign out the User and clear stored Auth data.
+  (fn@ signOut [] @(#setUser))
+
+  ; Sign-Up a new user.
+  ; https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/signUp
+  (fn@ signUp [req]
+    @(#handleResponse @(this.api :signUp req)))
+
+  ; Sign-In exsiting user.
+  ; https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/signInWithPassword
+  (fn@ signIn [req]
+    @(#handleResponse @(this.api :signInWithPassword req)))
+
+  ; Reset password for user.
+  ; https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/resetPassword
+  (fn@ resetPassword [req]
+    @(this.api :resetPassword req))
+
+  ; Delete the user. The removes the account entirely.
+  ; https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/delete
+  (fn@ delete []
+    @(this.api :delete {:idToken this.user?.idToken})
+    @(this.signOut))
+
+  ; Get the bearer token, if one is available. Refresh it if necessary. This
+  ; method can be used as a TokenSource in @daaku/firebase-rest-api.
+  (fn@ getBearerToken []
+    (when #user?.refreshToken
+      @(#refresh)
+      #user?.idToken))
+
+  ; Subscribe to get notified of user changes. This is fired only when
+  ; user.localId changes (including sign in/sign out). Callback is invoked once
+  ; immediately with current user, unless immediate = false. Returned function
+  ; can be used to unsubscribe.
+  (fn subscribe [cb (immediate true)]
+    (#subscribers.push cb)
+    (when immediate
+      (cb #user))
+    #(set #subscribers (#subscribers.filter #(not= $ cb))))
+
+  ; Send a link to the provided email address that allows signing in.
+  (fn@ sendEmailSigninLink [email]
+    @(#storage.set #kEmail email)
+    @(this.api :sendOobCode {:requestType :EMAIL_SIGNIN :email email}))
+
+  ; This should be invoked on the page where the user lands from an email sign
+  ; in link.
+  (fn@ handleEmailSigninRedirect [(url location.href)]
+    (let [oobCode (?. (url.match #/[?&]oobCode=([^&]+)/) 1)]
+      (when (not oobCode)
+        (throw (Error "oobCode not found in URL")))
+      (let [email @(#storage.get #kEmail)]
+        (when (not email)
+          (throw (Error "email not found in storage")))
+        @(#handleResponse
+           @(this.api :signInWithEmailLink {:oobCode oobCode :email email}))
+        @(#storage.remove #kEmail))))
+
+  ; This allows calling for the various APIs documented here:
+  ; https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts
+  (fn@ api [endpoint body]
+    (let [url (if (= endpoint :token)
+                `https://securetoken.googleapis.com/v1/token?key=${#apiKey}`
+                `https://identitytoolkit.googleapis.com/v1/accounts:${endpoint}?key=${#apiKey}`)
+          response @(fetch url {:method :post :body (JSON.stringify body)})
+          data @(.json response)]
+      (if (not response.ok)
+        (throw (Error data)))
+      data))
+
+  (fn@ #refresh []
+    (when (not #user)
+      (throw (Error "refresh called without existing user")))
+    (when (< (Date.now) #user.expiresAt)
+      (return))
+    (when (not #refreshP)
+      (let [refreshToken #user.refreshToken]
+        (set #refreshP
+             ((fn@ []
+                @(#handleResponse
+                   @(this.api :token {:grant_type :refresh_token
+                                      :refresh_token refreshToken})))))))
+    @#refreshP
+    (set #refreshP undefined)))
