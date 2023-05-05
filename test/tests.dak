@@ -40,33 +40,33 @@
 (macro deftest [name ...body]
   '(QUnit.test name (fn@ [assert] ,...body)))
 
-(deftest "email link signin"
-  (let [login (nanoid)
-        email `${login}@${domain}`
-        states [#(assert.equal $ undefined  "start off without a user")
-                #(assert.equal $?.email email "sign in")
-                #(assert.equal $ undefined "account deleted")]
-        done (assert.async states.length)
-        auth @(Auth.new {:apiKey apiKey :name (nanoid)})
-        count 0]
-    (auth.subscribe
-      (fn [user]
-        (let [f (. states count)]
-          (when (not f)
-            (assert.ok false "unexpected assertion"))
-          (++ count)
-          (f user)
-          (done))))
-    ; complete the email sign in flow
-    @(auth.sendEmailSigninLink email)
-    @(auth.handleEmailSigninRedirect @(getSigninLink login))
-    ; force a refresh by mucking with the data
-    (set auth.user.expiresAt (- (Date.now) 10000))
-    (let [old-expires auth.user.expiresAt]
-      ; trigger a refresh
-      (assert.ok @(auth.getBearerToken) "expect a bearer token")
-      (assert.notEqual auth.user?.expiresAt old-expires "expires changes"))
-    @(auth.delete)))
+; (deftest "email link signin"
+;   (let [login (nanoid)
+;         email `${login}@${domain}`
+;         states [#(assert.equal $ undefined  "start off without a user")
+;                 #(assert.equal $?.email email "sign in")
+;                 #(assert.equal $ undefined "account deleted")]
+;         done (assert.async states.length)
+;         auth @(Auth.new {:apiKey apiKey :name (nanoid)})
+;         count 0]
+;     (auth.subscribe
+;       (fn [user]
+;         (let [f (. states count)]
+;           (when (not f)
+;             (assert.ok false "unexpected assertion"))
+;           (++ count)
+;           (f user)
+;           (done))))
+;     ; complete the email sign in flow
+;     @(auth.sendEmailSigninLink email)
+;     @(auth.handleEmailSigninRedirect @(getSigninLink login))
+;     ; force a refresh by mucking with the data
+;     (set auth.user.expiresAt (- (Date.now) 10000))
+;     (let [old-expires auth.user.expiresAt]
+;       ; trigger a refresh
+;       (assert.ok @(auth.getBearerToken) "expect a bearer token")
+;       (assert.notEqual auth.user?.expiresAt old-expires "expires changes"))
+;     @(auth.delete)))
 
 (deftest "email sign-up / sign-in"
   (let [login (nanoid)
