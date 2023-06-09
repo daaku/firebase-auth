@@ -23,7 +23,7 @@
     "@daaku/qunit-puppeteer": "^3.0.0",
     "@daklang/cli": "^0.10.0",
     "@daklang/esbuild": "^0.2.0",
-    "esbuild": "^0.17.12",
+    "esbuild": "^0.18.0",
     "nanoid": "^4.0.0",
     "qunit": "^2.17.2"
   }
