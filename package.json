@@ -32,7 +32,7 @@
   "devDependencies": {
     "@daaku/qunit-puppeteer": "^3.0.0",
     "@types/qunit": "^2.11.2",
-    "nanoid": "^4.0.0",
+    "nanoid": "^5.0.3",
     "qunit": "^2.17.2",
     "typescript": "^5.0.2",
     "vite": "^5.0.2"
