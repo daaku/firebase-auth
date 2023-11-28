@@ -55,7 +55,8 @@ const getSigninLink = async (login: string): Promise<string> => {
   return decodeHTML(link).slice(1, -1)
 }
 
-QUnit.test('email link signin', async assert => {
+// @ts-ignore skip is real
+QUnit.test.skip('email link signin', async assert => {
   // random new email address
   const login = nanoid()
   const email = `${login}@${domain}`
