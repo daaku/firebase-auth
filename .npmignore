@@ -1,9 +1,12 @@
-/.eslintrc.js
 /.github
 /.vscode
+/bun.lockb
 /coverage
-/dist/bundle
-/dist/test
+/dist/*
+/pnpm-lock.yaml
 /src
 /test
 /tsconfig.json
+/vite.config.ts
+
+!/dist/src
