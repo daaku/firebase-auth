@@ -4,7 +4,6 @@
 /coverage
 /dist/*
 /pnpm-lock.yaml
-/src
 /test
 /tsconfig.json
 /vite.config.ts
