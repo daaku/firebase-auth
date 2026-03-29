@@ -3,7 +3,10 @@
   "author": "Naitik Shah <n@daaku.org>",
   "version": "2.7.0",
   "description": "Firebase Auth token management.",
-  "repository": "git@github.com:daaku/firebase-auth",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/daaku/firebase-auth.git"
+  },
   "license": "MIT",
   "type": "module",
   "exports": {
